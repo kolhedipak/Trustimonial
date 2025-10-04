@@ -39,6 +39,9 @@ export const authAPI = {
   login: (credentials) => api.post('/api/auth/login', credentials),
   register: (userData) => api.post('/api/auth/register', userData),
   getMe: () => api.get('/api/auth/me'),
+  forgotPassword: (email) => api.post('/api/auth/forgot-password', { email }),
+  resetPassword: (token, password) => api.post('/api/auth/reset-password', { token, password }),
+  verifyResetToken: (token) => api.post('/api/auth/verify-reset-token', { token }),
 };
 
 export const testimonialsAPI = {
@@ -105,12 +108,17 @@ export const dashboardAPI = {
   // Space Detail API
   getSpaceDetail: (spaceId) => api.get(`/api/spaces/${spaceId}`),
   getSpaceTestimonials: (spaceId, params) => api.get(`/api/spaces/${spaceId}/testimonials`, { params }),
+  getApprovedTestimonials: (spaceId, params) => api.get(`/api/spaces/${spaceId}/testimonials/approved`, { params }),
   createTestimonial: (spaceId, data) => api.post(`/api/spaces/${spaceId}/testimonials`, data),
   updateTestimonial: (spaceId, testimonialId, data) => api.put(`/api/spaces/${spaceId}/testimonials/${testimonialId}`, data),
   actionTestimonial: (spaceId, testimonialId, action) => api.post(`/api/spaces/${spaceId}/testimonials/${testimonialId}/actions`, { action }),
   bulkActionTestimonials: (spaceId, testimonialIds, action) => api.post(`/api/spaces/${spaceId}/testimonials/bulk`, { testimonialIds, action }),
   bulkImportTestimonials: (spaceId, formData) => api.post(`/api/spaces/${spaceId}/testimonials/bulk`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  exportTestimonials: (spaceId, params) => api.get(`/api/spaces/${spaceId}/testimonials/export`, { 
+    params,
+    responseType: 'blob'
   }),
   getSpaceIntegrations: (spaceId) => api.get(`/api/spaces/${spaceId}/integrations`),
   connectIntegration: (spaceId, integrationId) => api.post(`/api/spaces/${spaceId}/integrations/${integrationId}/connect`),

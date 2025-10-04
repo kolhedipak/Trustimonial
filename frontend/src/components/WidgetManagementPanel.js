@@ -10,6 +10,9 @@ const WidgetManagementPanel = ({ spaceId }) => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [widgetType, setWidgetType] = useState(null);
+  const [editingWidget, setEditingWidget] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewWidget, setPreviewWidget] = useState(null);
 
   useEffect(() => {
     fetchWidgets();
@@ -34,6 +37,24 @@ const WidgetManagementPanel = ({ spaceId }) => {
   };
 
   const handleWidgetCreated = () => {
+    setShowCreateModal(false);
+    setWidgetType(null);
+    fetchWidgets();
+  };
+
+  const handleEditWidget = (widget) => {
+    setEditingWidget(widget);
+    setWidgetType(widget.type);
+    setShowCreateModal(true);
+  };
+
+  const handlePreviewWidget = (widget) => {
+    setPreviewWidget(widget);
+    setShowPreviewModal(true);
+  };
+
+  const handleWidgetUpdated = () => {
+    setEditingWidget(null);
     setShowCreateModal(false);
     setWidgetType(null);
     fetchWidgets();
@@ -64,10 +85,13 @@ const WidgetManagementPanel = ({ spaceId }) => {
   };
 
   const generateEmbedCode = (widget) => {
-    const baseUrl = window.location.origin;
-    const widgetUrl = `${baseUrl}/embed/${widget.type}/${widget.id}`;
+    const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const iframeId = `trustimonials-${widget.type}-${widget.id}`;
+    const widgetUrl = `${backendUrl}/embed/${widget.type}/${widget.id}`;
     
-    return `<iframe src="${widgetUrl}" width="100%" height="400" frameborder="0" loading="lazy"></iframe>`;
+    return `<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.6/js/iframeResizer.min.js"></script>
+<iframe id='${iframeId}' src="${widgetUrl}" frameborder="0" scrolling="no" width="100%"></iframe>
+<script type="text/javascript">iFrameResize({log: false, checkOrigin: false}, '#${iframeId}');</script>`;
   };
 
   const getWidgetIcon = (type) => {
@@ -163,14 +187,14 @@ const WidgetManagementPanel = ({ spaceId }) => {
                   </span>
                   <div className="flex items-center space-x-1">
                     <button
-                      onClick={() => {/* TODO: Implement preview */}}
+                      onClick={() => handlePreviewWidget(widget)}
                       className="p-2 text-neutral-500 hover:text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary rounded"
                       title="Preview"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => {/* TODO: Implement edit */}}
+                      onClick={() => handleEditWidget(widget)}
                       className="p-2 text-neutral-500 hover:text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary rounded"
                       title="Edit"
                     >
@@ -200,14 +224,18 @@ const WidgetManagementPanel = ({ spaceId }) => {
 
       {/* Create Widget Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-surface rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg p-6 max-w-7xl w-full mx-4 max-h-[95vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-neutral-900">
-                Create {getWidgetTypeLabel(widgetType)} Widget
+                {editingWidget ? 'Edit' : 'Create'} {getWidgetTypeLabel(widgetType)} Widget
               </h3>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setEditingWidget(null);
+                  setWidgetType(null);
+                }}
                 className="text-neutral-500 hover:text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary rounded"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -219,16 +247,106 @@ const WidgetManagementPanel = ({ spaceId }) => {
             {widgetType === 'wall' ? (
               <WallOfLoveWidgetModal 
                 spaceId={spaceId} 
-                onClose={() => setShowCreateModal(false)}
-                onSuccess={handleWidgetCreated}
+                editingWidget={editingWidget}
+                onClose={() => {
+                  setShowCreateModal(false);
+                  setEditingWidget(null);
+                  setWidgetType(null);
+                }}
+                onSuccess={editingWidget ? handleWidgetUpdated : handleWidgetCreated}
               />
             ) : (
               <SingleTestimonialWidgetModal 
                 spaceId={spaceId} 
-                onClose={() => setShowCreateModal(false)}
-                onSuccess={handleWidgetCreated}
+                editingWidget={editingWidget}
+                onClose={() => {
+                  setShowCreateModal(false);
+                  setEditingWidget(null);
+                  setWidgetType(null);
+                }}
+                onSuccess={editingWidget ? handleWidgetUpdated : handleWidgetCreated}
               />
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreviewModal && previewWidget && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg p-6 max-w-6xl w-full mx-4 max-h-[95vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-neutral-900">
+                Preview: {previewWidget.name}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowPreviewModal(false);
+                  setPreviewWidget(null);
+                }}
+                className="text-neutral-500 hover:text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary rounded"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-neutral-50 p-4 rounded-lg">
+                <h4 className="font-medium text-neutral-900 mb-2">Widget Details</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Type:</span> {getWidgetTypeLabel(previewWidget.type)}
+                  </div>
+                  <div>
+                    <span className="font-medium">Status:</span> {previewWidget.status}
+                  </div>
+                  <div>
+                    <span className="font-medium">Design Template:</span> {previewWidget.designTemplate}
+                  </div>
+                  <div>
+                    <span className="font-medium">Created:</span> {new Date(previewWidget.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-neutral-200 rounded-lg p-4">
+                <h4 className="font-medium text-neutral-900 mb-4">Live Preview</h4>
+                <div className="border border-neutral-300 rounded-lg overflow-hidden">
+                  <iframe 
+                    id={`preview-${previewWidget.id}`}
+                    src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/embed/${previewWidget.type}/${previewWidget.id}`}
+                    width="100%" 
+                    height="400" 
+                    frameborder="0"
+                    style={{ minHeight: '400px' }}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowPreviewModal(false);
+                    setPreviewWidget(null);
+                  }}
+                  className="px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-surface hover:bg-neutral-50"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPreviewModal(false);
+                    setPreviewWidget(null);
+                    handleEditWidget(previewWidget);
+                  }}
+                  className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-600"
+                >
+                  Edit Widget
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

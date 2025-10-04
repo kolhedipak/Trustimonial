@@ -77,8 +77,7 @@ const TestimonialsInbox = ({
           }
           break;
         case 'export':
-          // TODO: Implement export functionality
-          toast('Export functionality coming soon');
+          await handleExportSelected();
           break;
       }
 
@@ -105,6 +104,63 @@ const TestimonialsInbox = ({
 
   const handleUnarchive = (testimonial) => handleTestimonialAction(testimonial, 'unarchive');
   const handleMarkAsSpam = (testimonial) => handleTestimonialAction(testimonial, 'spam');
+
+  const handleExportAll = async () => {
+    try {
+      console.log('Exporting all testimonials with filter:', filter);
+      const response = await dashboardAPI.exportTestimonials(spaceId, { 
+        format: 'csv',
+        filter: filter || 'all'
+      });
+      
+      console.log('Export response:', response);
+      
+      // Create download link
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `testimonials-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Testimonials exported successfully!');
+    } catch (error) {
+      console.error('Error exporting testimonials:', error);
+      toast.error('Failed to export testimonials');
+    }
+  };
+
+  const handleExportSelected = async () => {
+    try {
+      const selectedIds = Array.from(selectedTestimonials);
+      console.log('Exporting selected testimonials:', selectedIds);
+      const response = await dashboardAPI.exportTestimonials(spaceId, { 
+        format: 'csv',
+        testimonialIds: selectedIds.join(',') // Convert array to comma-separated string
+      });
+      
+      console.log('Export response:', response);
+      
+      // Create download link
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `selected-testimonials-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Selected testimonials exported successfully!');
+    } catch (error) {
+      console.error('Error exporting selected testimonials:', error);
+      toast.error('Failed to export selected testimonials');
+    }
+  };
 
   // Empty State
   if (!loading && testimonials.length === 0) {
@@ -193,6 +249,17 @@ const TestimonialsInbox = ({
                 : `${testimonials.length} testimonials`
               }
             </span>
+            
+            {/* Export All Button */}
+            {testimonials.length > 0 && (
+              <button
+                onClick={() => handleExportAll()}
+                className="inline-flex items-center px-3 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-surface hover:bg-neutral-50 focus:outline-none focus:ring-3 focus:ring-focus-ring"
+              >
+                <Download className="w-4 h-4 mr-1" />
+                Export All
+              </button>
+            )}
           </div>
 
           {bulkActionsVisible && (

@@ -4,27 +4,22 @@ import { X, Eye, Copy, Square, Image, Quote } from 'lucide-react';
 import { dashboardAPI } from '../utils/api';
 import toast from 'react-hot-toast';
 
-const SingleTestimonialWidgetModal = ({ spaceId, onClose, onSuccess }) => {
+const SingleTestimonialWidgetModal = ({ spaceId, onClose, onSuccess, editingWidget = null }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewData, setPreviewData] = useState(null);
-  const [showPreview, setShowPreview] = useState(false);
   const [availableTestimonials, setAvailableTestimonials] = useState([]);
+  const [copied, setCopied] = useState(false);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
-      name: '',
-      designTemplate: 'card-compact',
-      theme: 'light',
-      selectTestimonial: 'auto-latest',
-      manualTestimonialId: '',
-      showAuthorDetails: true,
-      showDate: false,
-      isPublic: true,
-      cta: {
-        text: '',
-        url: '',
-        style: 'button'
-      }
+      name: editingWidget?.name || '',
+      designTemplate: editingWidget?.designTemplate || 'card-compact',
+      theme: editingWidget?.settings?.theme || 'light',
+      selectTestimonial: editingWidget?.settings?.selectTestimonial || 'auto-latest',
+      manualTestimonialId: editingWidget?.settings?.manualTestimonialId || '',
+      showAuthorDetails: editingWidget?.settings?.showAuthorDetails !== false,
+      showDate: editingWidget?.settings?.showDate || false,
+      isPublic: editingWidget?.settings?.isPublic !== false,
     }
   });
 
@@ -37,16 +32,16 @@ const SingleTestimonialWidgetModal = ({ spaceId, onClose, onSuccess }) => {
     }
   }, [watchedValues.selectTestimonial, spaceId]);
 
-  // Debounced preview update
+  // Debounced preview update - only when essential values change
   useEffect(() => {
     const timer = setTimeout(() => {
       if (watchedValues.name && watchedValues.designTemplate) {
         generatePreview();
       }
-    }, 300);
+    }, 500); // Reduced debounce time for better responsiveness
 
     return () => clearTimeout(timer);
-  }, [watchedValues]);
+  }, [watchedValues.name, watchedValues.designTemplate, watchedValues.theme, watchedValues.selectTestimonial, watchedValues.showAuthorDetails, watchedValues.showDate]);
 
   const fetchAvailableTestimonials = async () => {
     try {
@@ -70,26 +65,98 @@ const SingleTestimonialWidgetModal = ({ spaceId, onClose, onSuccess }) => {
         settings: watchedValues
       };
 
-      // Mock preview data
+      // Try to get real testimonials for preview
+      let previewTestimonial = null;
+      
+      try {
+        const response = await dashboardAPI.getApprovedTestimonials(spaceId, { limit: 1 });
+        const testimonials = response.data.testimonials || [];
+        
+        if (testimonials.length > 0) {
+          previewTestimonial = testimonials[0];
+        }
+      } catch (error) {
+        console.error('Error fetching testimonials for preview:', error);
+      }
+
+      // Fallback to mock data if no real testimonials
+      if (!previewTestimonial) {
+        previewTestimonial = {
+          id: '1',
+          type: 'text',
+          authorName: 'Sarah Johnson',
+          content: 'This product has completely transformed how we work. The team loves it and we\'ve seen incredible results since implementing it.',
+          rating: 5,
+          questionResponses: [
+            { question: 'How has our product helped you?', answer: 'It has streamlined our workflow significantly.' }
+          ],
+          createdAt: new Date()
+        };
+      }
+
+      // Generate preview URL for iframe
+      const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const previewParams = new URLSearchParams({
+        theme: watchedValues.theme || 'light',
+        designTemplate: watchedValues.designTemplate || 'card-compact',
+        testimonial: JSON.stringify(previewTestimonial)
+      });
+      const previewUrl = `${backendUrl}/embed/single/preview?${previewParams.toString()}`;
+
       setPreviewData({
         widget: tempWidget,
-        testimonials: [
-          {
-            id: '1',
-            type: 'text',
-            authorName: 'Sarah Johnson',
-            content: 'This product has completely transformed how we work. The team loves it and we\'ve seen incredible results since implementing it.',
-            rating: 5,
-            questionResponses: [
-              { question: 'How has our product helped you?', answer: 'It has streamlined our workflow significantly.' }
-            ],
-            createdAt: new Date()
-          }
-        ]
+        testimonials: [previewTestimonial],
+        previewUrl: previewUrl
       });
     } catch (error) {
       console.error('Error generating preview:', error);
+      // Fallback to mock data on error
+      const fallbackWidget = {
+        name: watchedValues.name || 'Preview Widget',
+        type: 'single',
+        designTemplate: watchedValues.designTemplate,
+        settings: watchedValues
+      };
+      
+      const fallbackTestimonial = {
+        id: '1',
+        type: 'text',
+        authorName: 'Sarah Johnson',
+        content: 'This product has completely transformed how we work. The team loves it and we\'ve seen incredible results since implementing it.',
+        rating: 5,
+        questionResponses: [
+          { question: 'How has our product helped you?', answer: 'It has streamlined our workflow significantly.' }
+        ],
+        createdAt: new Date()
+      };
+
+      // Generate preview URL for iframe
+      const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const previewParams = new URLSearchParams({
+        theme: watchedValues.theme || 'light',
+        designTemplate: watchedValues.designTemplate || 'card-compact',
+        testimonial: JSON.stringify(fallbackTestimonial)
+      });
+      const previewUrl = `${backendUrl}/embed/single/preview?${previewParams.toString()}`;
+
+      setPreviewData({
+        widget: fallbackWidget,
+        testimonials: [fallbackTestimonial],
+        previewUrl: previewUrl
+      });
     }
+  };
+
+  const handleCopyEmbedCode = (widgetId) => {
+    const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const iframeId = `trustimonials-single-${widgetId}`;
+    const embedCode = `<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.6/js/iframeResizer.min.js"></script>
+<iframe id='${iframeId}' src="${backendUrl}/embed/single/${widgetId}" frameborder="0" scrolling="no" width="100%"></iframe>
+<script type="text/javascript">iFrameResize({log: false, checkOrigin: false}, '#${iframeId}');</script>`;
+    navigator.clipboard.writeText(embedCode);
+    setCopied(true);
+    toast.success('Iframe code copied to clipboard!');
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const onSubmit = async (data) => {
@@ -107,46 +174,64 @@ const SingleTestimonialWidgetModal = ({ spaceId, onClose, onSuccess }) => {
           manualTestimonialId: data.selectTestimonial === 'manual-select' ? data.manualTestimonialId : null,
           showAuthorDetails: data.showAuthorDetails,
           showDate: data.showDate,
-          isPublic: data.isPublic,
-          cta: data.cta.text ? data.cta : null
+          isPublic: data.isPublic
         }
       };
 
-      const response = await dashboardAPI.createWidget(spaceId, widgetData);
+      let response;
+      if (editingWidget) {
+        // Update existing widget
+        response = await dashboardAPI.updateWidget(editingWidget.id, widgetData);
+        toast.success('Single Testimonial widget updated successfully!');
+      } else {
+        // Create new widget
+        response = await dashboardAPI.createWidget(spaceId, widgetData);
+        toast.success('Single Testimonial widget created successfully!');
+        
+        // Show iframe copy option after creation
+        setTimeout(() => {
+          handleCopyEmbedCode(response.data.widget.id);
+        }, 1000);
+      }
       
-      toast.success('Single Testimonial widget created successfully!');
       onSuccess(response.data.widget);
     } catch (error) {
       console.error('Error creating widget:', error);
-      toast.error('Failed to create widget');
+      
+      // Show more specific error messages
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else if (error.response?.data?.details) {
+        toast.error(error.response.data.details);
+      } else {
+        toast.error('Failed to create widget');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCopyEmbedCode = () => {
-    const embedCode = `<iframe src="${window.location.origin}/embed/single/{widgetId}" width="100%" height="200" frameborder="0" loading="lazy"></iframe>`;
-    navigator.clipboard.writeText(embedCode);
-    toast.success('Embed code copied to clipboard!');
-  };
-
   return (
     <div className="max-w-6xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Preview Column */}
+        {/* Live Preview Column */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-lg font-semibold text-neutral-900">Preview</h4>
-            <button
-              onClick={() => setShowPreview(!showPreview)}
-              className="inline-flex items-center px-3 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-surface hover:bg-neutral-50 focus:outline-none focus:ring-3 focus:ring-focus-ring"
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              {showPreview ? 'Hide' : 'Show'} Preview
-            </button>
+            <h4 className="text-lg font-semibold text-neutral-900">Live Preview</h4>
+            {previewData && (
+              <button
+                onClick={() => handleCopyEmbedCode('preview')}
+                className={`inline-flex items-center px-3 py-2 border text-sm font-medium rounded-md transition-colors ${
+                  copied ? 'bg-green-50 text-green-700 border-green-300' : 'text-neutral-700 border-neutral-300 bg-surface hover:bg-neutral-50 focus:outline-none focus:ring-3 focus:ring-focus-ring'
+                }`}
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                {copied ? 'Copied!' : 'Copy Iframe'}
+              </button>
+            )}
           </div>
 
-          {showPreview && previewData && (
+          {previewData && previewData.previewUrl && (
             <div className="border border-neutral-300 rounded-lg p-4 bg-white">
               <div className="text-sm text-neutral-600 mb-4">
                 Single testimonial preview
@@ -156,14 +241,15 @@ const SingleTestimonialWidgetModal = ({ spaceId, onClose, onSuccess }) => {
               <div className="mb-4">
                 <div className="text-xs text-neutral-500 mb-2">Mobile (320px)</div>
                 <div className="w-80 mx-auto border border-neutral-200 rounded overflow-hidden">
-                  <div className="bg-neutral-50 p-2 text-xs text-center">Mobile Preview</div>
-                  <div className="p-3 bg-white">
-                    <div className="text-center">
-                      <div className="text-sm italic mb-2">"{previewData.testimonials[0].content}"</div>
-                      <div className="text-xs font-medium">{previewData.testimonials[0].authorName}</div>
-                      <div className="text-xs text-neutral-500">{'★'.repeat(previewData.testimonials[0].rating)}</div>
-                    </div>
-                  </div>
+                  <iframe
+                    src={previewData.previewUrl}
+                    width="320"
+                    height="200"
+                    frameBorder="0"
+                    scrolling="no"
+                    style={{ border: 'none' }}
+                    title="Mobile Preview"
+                  />
                 </div>
               </div>
 
@@ -171,14 +257,15 @@ const SingleTestimonialWidgetModal = ({ spaceId, onClose, onSuccess }) => {
               <div>
                 <div className="text-xs text-neutral-500 mb-2">Desktop (600px)</div>
                 <div className="border border-neutral-200 rounded overflow-hidden">
-                  <div className="bg-neutral-50 p-2 text-xs text-center">Desktop Preview</div>
-                  <div className="p-6 bg-white">
-                    <div className="text-center">
-                      <div className="text-lg italic mb-4">"{previewData.testimonials[0].content}"</div>
-                      <div className="text-sm font-medium mb-1">{previewData.testimonials[0].authorName}</div>
-                      <div className="text-sm text-neutral-500">{'★'.repeat(previewData.testimonials[0].rating)}</div>
-                    </div>
-                  </div>
+                  <iframe
+                    src={previewData.previewUrl}
+                    width="600"
+                    height="300"
+                    frameBorder="0"
+                    scrolling="no"
+                    style={{ border: 'none' }}
+                    title="Desktop Preview"
+                  />
                 </div>
               </div>
             </div>
@@ -353,34 +440,6 @@ const SingleTestimonialWidgetModal = ({ spaceId, onClose, onSuccess }) => {
               </div>
             </div>
 
-            {/* CTA Settings */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-neutral-900">Call to Action</h4>
-              
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  CTA Text
-                </label>
-                <input
-                  type="text"
-                  {...register('cta.text')}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  placeholder="Leave a testimonial"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  CTA URL
-                </label>
-                <input
-                  type="url"
-                  {...register('cta.url')}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  placeholder="https://example.com/testimonials"
-                />
-              </div>
-            </div>
 
             {/* Actions */}
             <div className="flex items-center justify-between pt-6 border-t border-neutral-200">
@@ -395,7 +454,7 @@ const SingleTestimonialWidgetModal = ({ spaceId, onClose, onSuccess }) => {
               <div className="flex space-x-3">
                 <button
                   type="button"
-                  onClick={handleCopyEmbedCode}
+                  onClick={() => handleCopyEmbedCode('preview')}
                   className="inline-flex items-center px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-surface hover:bg-neutral-50 focus:outline-none focus:ring-3 focus:ring-focus-ring"
                 >
                   <Copy className="w-4 h-4 mr-2" />
@@ -407,7 +466,7 @@ const SingleTestimonialWidgetModal = ({ spaceId, onClose, onSuccess }) => {
                   disabled={isSubmitting}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-cta hover:bg-cta-600 focus:outline-none focus:ring-3 focus:ring-focus-ring disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Widget'}
+                  {isSubmitting ? (editingWidget ? 'Updating...' : 'Creating...') : (editingWidget ? 'Update Widget' : 'Create Widget')}
                 </button>
               </div>
             </div>
