@@ -25,7 +25,7 @@ const WidgetManagementPanel = ({ spaceId }) => {
       setWidgets(response.data.widgets || []);
     } catch (error) {
       console.error('Error fetching widgets:', error);
-      toast.error('Failed to load widgets');
+      toast.error('widgets not found');
     } finally {
       setLoading(false);
     }

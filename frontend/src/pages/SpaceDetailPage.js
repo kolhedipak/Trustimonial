@@ -56,7 +56,7 @@ const SpaceDetailPage = () => {
       setSpace(response.data.space);
       setShowEditModal(false);
       setEditingSpace(null);
-      toast.success('Space updated successfully!');
+      //toast.success('Space updated successfully!');
     } catch (error) {
       console.error('Error updating space:', error);
       toast.error('Failed to update space');

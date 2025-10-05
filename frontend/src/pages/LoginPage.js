@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import Navbar from '../components/Navbar';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -30,15 +31,11 @@ const LoginPage = () => {
   };
 
   return (
+    <div>
+      <Navbar />
     <div className="min-h-screen flex items-center justify-center bg-muted-surface py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">T</span>
-            </div>
-            <span className="text-2xl font-bold text-neutral-900">Trustimonials</span>
-          </div>
+        <div className="text-center"> 
           <h2 className="text-3xl font-bold text-neutral-900">Welcome back</h2>
           <p className="mt-2 text-neutral-700">
             Sign in to your account to continue
@@ -167,6 +164,7 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate } from 'react-router-dom';
 import { User, ChevronDown, LogOut, Settings } from 'lucide-react';
 
 const Header = ({ productName = 'Trustimonials', onProfileClick }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -59,6 +59,8 @@ const Header = ({ productName = 'Trustimonials', onProfileClick }) => {
           </button>
 
           {/* User Profile */}
+          {isAuthenticated ? (
+          
           <div className="relative">
             <button
               onClick={handleProfileClick}
@@ -105,6 +107,22 @@ const Header = ({ productName = 'Trustimonials', onProfileClick }) => {
               </div>
             )}
           </div>
+          ) : (
+              <div className="flex items-center space-x-4">
+                <Link 
+                  to="/login" 
+                  className="text-neutral-700 hover:text-primary transition-colors duration-200"
+                >
+                  Login
+                </Link>
+                <Link 
+                  to="/register" 
+                  className="btn-primary"
+                >
+                  Get Started
+                </Link>
+              </div>
+          )}
         </div>
       </div>
     </header>

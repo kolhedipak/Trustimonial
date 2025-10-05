@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Header from '../components/Header';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Star, 
@@ -60,6 +61,7 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen">
+      <Header />
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary-300/10 to-cta-600/10 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -84,9 +86,10 @@ const LandingPage = () => {
                     Get Started Free
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Link>
-                  <Link to="/gallery" className="btn-outline text-lg px-8 py-3">
+                  {/*<Link to="/gallery" className="btn-outline text-lg px-8 py-3">
                     View Gallery
-                  </Link>
+                  </Link>*/}
+                 
                 </>
               )}
             </div>
@@ -200,7 +203,7 @@ const LandingPage = () => {
               Building trust through authentic customer testimonials.
             </p>
             <p className="text-sm text-neutral-500">
-              © 2024 Trustimonials. All rights reserved.
+              © 2025 Trustimonials. All rights reserved.
             </p>
           </div>
         </div>

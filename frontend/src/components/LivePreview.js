@@ -116,8 +116,8 @@ const LivePreview = ({
               {collectionType === 'text-and-star' || collectionType === 'text-and-video' ? (
                 <div className="space-y-3">
                   <textarea
-                    className={`${inputClasses} resize-none`}
-                    rows={3}
+                    className={`${inputClasses}`}
+                    rows={1}
                     placeholder="Share your thoughts..."
                     disabled
                   />
@@ -135,8 +135,8 @@ const LivePreview = ({
                 </div>
               ) : (
                 <textarea
-                  className={`${inputClasses} resize-none`}
-                  rows={3}
+                  className={`${inputClasses} `}
+                  rows={1}
                   placeholder="Share your thoughts..."
                   disabled
                 />

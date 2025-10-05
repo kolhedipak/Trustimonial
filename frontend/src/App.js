@@ -7,7 +7,6 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
-import Dashboard from './pages/Dashboard';
 import NewDashboard from './pages/NewDashboard';
 import SpaceDetailPage from './pages/SpaceDetailPage';
 import TestimonialSubmission from './pages/TestimonialSubmission';
@@ -47,14 +46,7 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/dashboard-old" 
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
+             
               <Route 
                 path="/widget-generator" 
                 element={

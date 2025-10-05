@@ -329,8 +329,8 @@ const PublicSubmissionPage = () => {
                   <div className="space-y-3">
                     <textarea
                       {...register(`question_${index}`, { required: 'This question is required' })}
-                      className={`${inputClasses} resize-none`}
-                      rows={3}
+                      className={`${inputClasses}`}
+                      rows={1}
                       placeholder="Share your thoughts..."
                     />
                     {collectionType === 'text-and-star' && (
@@ -358,8 +358,8 @@ const PublicSubmissionPage = () => {
                 ) : (
                   <textarea
                     {...register(`question_${index}`, { required: 'This question is required' })}
-                    className={`${inputClasses} resize-none`}
-                    rows={3}
+                    className={`${inputClasses} `}
+                    rows={1}
                     placeholder="Share your thoughts..."
                   />
                 )}

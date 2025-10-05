@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { authAPI } from '../utils/api';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
-
+import Navbar from '../components/Navbar';
 const ForgotPasswordPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -113,6 +113,8 @@ const ForgotPasswordPage = () => {
   }
 
   return (
+    <div>
+      <Navbar />
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -174,6 +176,7 @@ const ForgotPasswordPage = () => {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

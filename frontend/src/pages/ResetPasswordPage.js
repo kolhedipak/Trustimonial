@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { authAPI } from '../utils/api';
 import { ArrowLeft, Lock, CheckCircle, Eye, EyeOff } from 'lucide-react';
-
+import Navbar from '../components/Navbar';
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -158,6 +158,8 @@ const ResetPasswordPage = () => {
   }
 
   return (
+    <div>
+      <Navbar />
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -266,6 +268,7 @@ const ResetPasswordPage = () => {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

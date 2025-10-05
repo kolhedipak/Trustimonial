@@ -166,17 +166,24 @@ const EnhancedCreateSpaceModal = ({ isOpen, onClose, onSubmit, loading = false, 
       
       // First try debug endpoint
       try {
-        const debugResponse = await dashboardAPI.debugSpace(spaceData);
-        console.log('Debug response:', JSON.stringify(debugResponse.data, null, 2));
-      } catch (debugError) {
-        console.error('Debug error:', debugError);
-      }
-      
-      const response = await dashboardAPI.createSpace(spaceData);
-      
-      // Call parent onSubmit with response
+        if(editingSpace) {
+          const response = await dashboardAPI.updateSpace(editingSpace.id, spaceData);
+          console.log('update response:', JSON.stringify(response.data, null, 2));
+            // Call parent onSubmit with response
       if (onSubmit) {
         onSubmit(response.data.space);
+      }
+        }
+        else{
+          const response = await dashboardAPI.createSpace(spaceData);
+          console.log('create response:', JSON.stringify(response.data, null, 2));
+          // Call parent onSubmit with response
+          if (onSubmit) {
+            onSubmit(response.data.space);
+          }
+        }
+      } catch (debugError) {
+        console.error('Debug error:', debugError);
       }
       
       onClose();
@@ -323,16 +330,21 @@ const EnhancedCreateSpaceModal = ({ isOpen, onClose, onSubmit, loading = false, 
                           </button>
                         </div>
                       ) : (
-                        <label className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors duration-200">
-                          <Upload className="w-8 h-8 text-neutral-400 mx-auto mb-2" />
-                          <span className="text-sm text-neutral-600">Upload a square logo (max 2MB)</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleLogoUpload}
-                            className="hidden"
-                          />
-                        </label>
+                        <div className="w-32 aspect-square">
+                          <label className="border-2 border-dashed border-neutral-300 rounded-lg p-2 sm:p-4 text-center cursor-pointer hover:border-primary transition-colors duration-200 flex flex-col justify-center items-center">
+                            <Upload className="w-8 h-8 text-neutral-400 mb-2" />
+                            <span className="text-xs text-neutral-600 break-words text-center">
+                              Upload a square logo (max 2MB)
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                            />
+                          </label>
+                      </div>
+                      
                       )}
                     </div>
                   </div>
@@ -463,7 +475,7 @@ const EnhancedCreateSpaceModal = ({ isOpen, onClose, onSubmit, loading = false, 
                   <div>
                     <label className="form-label">Theme</label>
                     <div className="grid grid-cols-3 gap-2">
-                      {['light', 'dark', 'minimal'].map((themeOption) => (
+                      {['light', 'dark'].map((themeOption) => (
                         <label key={themeOption} className="flex flex-col items-center space-y-2 p-3 border border-neutral-300 rounded-lg cursor-pointer hover:border-primary transition-colors duration-200">
                           <input
                             {...register('theme')}
